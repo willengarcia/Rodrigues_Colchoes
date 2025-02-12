@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import '../../src/SetorFinanceiro.css';
 
 const SetorFinanceiro = () => {
-  // Dados simulados dos protocolos aprovados (você pode substituir por dados reais vindos do backend)
   const [protocolosAprovados, setProtocolosAprovados] = useState([
     {
       protocolo: 123456,

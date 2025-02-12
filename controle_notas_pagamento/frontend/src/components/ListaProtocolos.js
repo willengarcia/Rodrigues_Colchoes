@@ -5,7 +5,6 @@ const ListaProtocolos = () => {
   const [protocolos, setProtocolos] = useState([]);
 
   useEffect(() => {
-    // Aqui você faria a chamada para buscar os protocolos da API
     setProtocolos([
       { id: 1, numero: '123', status: 'Pendente', fornecedor: 'Fornecedor A' },
       { id: 2, numero: '456', status: 'Aprovado', fornecedor: 'Fornecedor B' },

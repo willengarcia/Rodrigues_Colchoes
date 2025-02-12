@@ -6,7 +6,6 @@ const Dashboard = () => {
   const [data, setData] = useState({});
 
   useEffect(() => {
-    // Aqui você poderia fazer uma chamada à API para obter os dados do dashboard
     setData({
       pending: 5,
       approved: 10,
