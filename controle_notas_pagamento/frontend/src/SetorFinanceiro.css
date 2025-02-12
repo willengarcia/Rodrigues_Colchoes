@@ -1,0 +1,45 @@
+.setor-financeiro-container {
+  width: 60%;
+  margin: 0 auto;
+  padding: 20px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.setor-financeiro-container h2 {
+  text-align: center;
+}
+
+.protocolo {
+  margin-bottom: 20px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #fff;
+}
+
+.protocolo p {
+  margin: 5px 0;
+}
+
+.actions {
+  margin-top: 10px;
+}
+
+button {
+  padding: 8px 12px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: 0.8;
+}
+
+.pay-btn {
+  background-color: #4CAF50;
+  color: white;
+}
