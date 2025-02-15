@@ -81,13 +81,11 @@ client.on('message', async (message) => {
       await message.reply('Erro ao criar chamado.');
       return;
     }
-
-    // Aguardar 5 segundos antes de associar o requerente
     setTimeout(async () => {
       await setTicketRequester(chamado.id, user['2'], sessionToken);
       await message.reply(`✅ Chamado criado com sucesso! ID: ${chamado.id}`);
       delete userChoices[from];
-    }, 5000); // Aguardar 5 segundos antes de executar a função setTicketRequester
+    }, 2000);
 
   } catch (error) {
     console.error('Erro ao criar chamado:', error.response?.data || error.message);
@@ -150,12 +148,11 @@ async function createTicket(userData, sessionToken) {
 
 async function setTicketRequester(ticketId, userId, sessionToken) {
   try {
-    // Atribui o usuário como requerente do ticket
     await axios.post('https://suporte.rodriguescolchoes.com.br/apirest.php/Ticket_User', {
       input: {
         tickets_id: ticketId,
         users_id: userId,
-        type: 1 // Tipo 1 para requerente
+        type: 1 
       }
     }, {
       headers: {
