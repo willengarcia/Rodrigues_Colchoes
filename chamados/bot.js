@@ -1,8 +1,17 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+const request = require('request');
+const FormData = require('form-data');
 const categorias = ['Internet', 'Computador', 'Impressora', 'Sistema'];
 let userChoices = {};
 let timers = {}; 
+const tempDir = path.join(__dirname, 'temp');
+
+if (!fs.existsSync(tempDir)) {
+  fs.mkdirSync(tempDir);
+}
 
 const client = new Client({ authStrategy: new LocalAuth() });
 client.on('qr', (qr) => console.log('QR RECEIVED', qr));
@@ -27,7 +36,7 @@ client.on('message', async (message) => {
 
   if (!userChoices[from].nome) {
     userChoices[from].nome = incomingMsg;
-    await message.reply('Escolha a categoria do problema:' + categorias.map((c, i) => `${i + 1}. ${c}`).join('\n'));
+    await message.reply('Escolha a categoria do problema:' + categorias.map((c, i) => `\n${i + 1}. ${c}`).join(''));
     return;
   }
 
@@ -57,9 +66,46 @@ client.on('message', async (message) => {
   }
 
   if (userChoices[from].imagem && message.hasMedia) {
-    const media = await message.downloadMedia();
-    userChoices[from].media = media;
-    await message.reply('Imagem recebida! Criando chamado...');
+    try {
+      const media = await message.downloadMedia();
+      
+      if (!media || !media.data || media.data.length === 0) {
+        await message.reply('❌ Nenhuma imagem foi recebida ou houve erro ao processá-la.');
+        return;
+      }
+
+      console.log("📸 Tamanho do arquivo recebido (base64):", media.data.length);
+
+      // Caminho correto para salvar a imagem
+      const imagePath = path.join(__dirname, 'temp', `${Date.now()}.jpeg`);
+
+      console.log("📂 Salvando imagem em:", imagePath);
+
+      // Salva a imagem garantindo que é um buffer correto
+      const base64Data = media.data.replace(/^data:image\/\w+;base64,/, "");
+      const imageBuffer = Buffer.from(base64Data, 'base64');
+      fs.writeFileSync(imagePath, imageBuffer);
+
+      console.log(`✅ Arquivo salvo com sucesso (${imageBuffer.length} bytes)`);
+
+      // Associa o caminho do arquivo ao usuário
+      userChoices[from].filePath = imagePath;
+
+      // Exclui a imagem após 60 segundos
+      setTimeout(() => {
+          if (fs.existsSync(imagePath)) {
+              fs.unlinkSync(imagePath);
+              console.log(`🗑️ Arquivo temporário removido: ${imagePath}`);
+          }
+      }, 60000);
+
+      await message.reply('✅ Imagem recebida! Criando chamado...');
+
+    } catch (error) {
+      console.error('❌ Erro ao processar a imagem:', error);
+      await message.reply('❌ Erro ao baixar a imagem. Tente novamente.');
+      return;
+    }
   }
 
   try {
@@ -75,31 +121,26 @@ client.on('message', async (message) => {
       return;
     }
 
-    // Criar o ticket sem definir users_id_requester inicialmente
     const chamado = await createTicket(userChoices[from], sessionToken);
     if (!chamado) {
       await message.reply('Erro ao criar chamado.');
       return;
     }
-    setTimeout(async () => {
-      await setTicketRequester(chamado.id, user['2'], sessionToken);
-      await message.reply(`✅ Chamado criado com sucesso! ID: ${chamado.id}`);
-      delete userChoices[from];
-    }, 2000);
 
+    await setTicketRequester(chamado.id, user["2"], sessionToken);
+
+    if (userChoices[from].filePath) {
+      console.log("Caminho do arquivo: ", userChoices[from].filePath);
+      await uploadImageToTicket(chamado.id, userChoices[from].filePath, sessionToken);
+    }
+
+    await message.reply(`✅ Chamado criado com sucesso! ID: ${chamado.id}`);
+    delete userChoices[from];
   } catch (error) {
     console.error('Erro ao criar chamado:', error.response?.data || error.message);
     await message.reply('❌ Erro ao criar seu chamado.');
   }
 });
-
-function resetUserTimer(user, message) {
-  if (timers[user]) clearTimeout(timers[user]);
-  timers[user] = setTimeout(() => {
-    message.reply('⏳ Tempo expirado. Reinicie enviando qualquer mensagem.');
-    delete userChoices[user];
-  }, 5 * 60 * 1000);
-}
 
 async function getSessionToken() {
   try {
@@ -122,6 +163,7 @@ async function getUserIdByFilial(filialName, sessionToken) {
       headers: { 'Session-Token': sessionToken },
       params: { 'criteria[0][field]': 1, 'criteria[0][searchtype]': 'contains', 'criteria[0][value]': filialName }
     });
+    console.log("ID da filial: ", response.data);
     return response.data.data.length > 0 ? response.data.data[0] : null;
   } catch (error) {
     console.error('Erro ao buscar usuário:', error.response?.data || error.message);
@@ -139,10 +181,96 @@ async function createTicket(userData, sessionToken) {
         priority: '2',
       }
     }, { headers: { 'Session-Token': sessionToken } });
+    console.log("ID do ticket: ", response.data.id);
     return response.data;
   } catch (error) {
     console.error('Erro ao criar chamado:', error.response?.data || error.message);
     return null;
+  }
+}
+
+function resetUserTimer(user, message) {
+  if (timers[user]) clearTimeout(timers[user]);
+  timers[user] = setTimeout(() => {
+    message.reply('⏳ Tempo expirado. Reinicie enviando qualquer mensagem.');
+    delete userChoices[user];
+  }, 5 * 60 * 1000);
+}
+
+async function uploadImageToTicket(ticketId, filePath, sessionToken) {
+  const formData = new FormData();
+  formData.append('uploadManifest', JSON.stringify({
+    input: {
+      name: 'Imagem do Chamado',
+      _filename: [path.basename(filePath)]
+    }
+  }));
+  
+  // Lê o arquivo como um fluxo de dados (stream)
+  const fileStream = fs.createReadStream(filePath);
+
+  // Adiciona o arquivo ao FormData
+  formData.append('filename[0]', fileStream, {
+    filename: path.basename(filePath),
+    contentType: 'image/jpeg' // ou 'image/png' se for o caso
+  });
+
+  // Configura os headers necessários
+  const headers = {
+    'Content-Type': 'multipart/form-data',
+    'User-Agent': 'insomnia/10.3.1',
+    'App-Token': '017KVE1WqVngF1AJMw8iy3c0j5XNOzZw8XG06IGC',
+    'Authorization': 'user_token 7pSjNh9fxrHuBtrOlVGtKOfLX4QeqGJvuIgqAPuT',
+    'Session-Token': sessionToken
+  };
+
+  try {
+    // Envia a imagem para o GLPI
+    const response = await axios.post(
+      `https://suporte.rodriguescolchoes.com.br/apirest.php/Ticket/${ticketId}/Document`,
+      formData,
+      { headers: headers }
+    );
+
+    console.log('Resposta da API ao enviar imagem:', response.data);
+
+    if (response.data.upload_result && response.data.upload_result.filename.length > 0) {
+      console.log('✅ ID da imagem:', response.data.id);
+      // Chama a função para vincular o documento ao ticket
+      await linkDocumentToTicket(response.data.id, ticketId, sessionToken);
+    } else {
+      console.error('❌ Erro ao enviar imagem: resposta inesperada da API', response.data);
+    }
+  } catch (error) {
+    console.error('❌ Erro ao enviar a imagem para o GLPI:', error.response?.data || error.message);
+  }
+}
+
+async function linkDocumentToTicket(documentId, ticketId, sessionToken) {
+  const requestBody = {
+    "input": {
+      "documents_id": documentId,
+      "itemtype": "Ticket",
+      "items_id": ticketId
+    }
+  };
+
+  try {
+    const response = await axios.post(
+      `https://suporte.rodriguescolchoes.com.br/apirest.php/Document_Item`,
+      requestBody,
+      {
+        headers: {
+          'App-Token': '017KVE1WqVngF1AJMw8iy3c0j5XNOzZw8XG06IGC',
+          'Authorization': 'user_token 7pSjNh9fxrHuBtrOlVGtKOfLX4QeqGJvuIgqAPuT',
+          "Session-Token": sessionToken,
+          "Content-Type": "application/json"
+        }
+      }
+    );
+    console.log('✅ Documento vinculado ao ticket com sucesso:', response.data);
+  } catch (error) {
+    console.error("❌ Erro ao vincular documento ao ticket:", error.response?.data || error.message);
   }
 }
 
@@ -162,10 +290,7 @@ async function setTicketRequester(ticketId, userId, sessionToken) {
       }
     });
   } catch (error) {
-    console.log(error)
     console.error('Erro ao definir requerente:', error.response?.data || error.message);
   }
 }
-
-
 client.initialize();
