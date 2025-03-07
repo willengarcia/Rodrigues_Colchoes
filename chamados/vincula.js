@@ -1,9 +1,9 @@
 const axios = require("axios");
 
 // Defina as configurações
-const ticketId = 1723; // Substitua pelo ID do ticket correto
-const documentId = 1085; // Substitua pelo ID do documento retornado
-const sessionToken = "rmp0k46jd57dbj14r5bnq35pgp"; // Insira o token correto
+const ticketId = 2208; // Substitua pelo ID do ticket correto
+const documentId = 1440; // Substitua pelo ID do documento retornado
+const sessionToken = "2prm8hq953i6bnh93hpicvk1tc"; // Insira o token correto
 const appToken = "017KVE1WqVngF1AJMw8iy3c0j5XNOzZw8XG06IGC";
 const userToken = "user_token 7pSjNh9fxrHuBtrOlVGtKOfLX4QeqGJvuIgqAPuT";
 

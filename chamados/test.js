@@ -4,14 +4,14 @@ const path = require('path');
 
 const options = {
   method: 'POST',
-  url: 'https://suporte.rodriguescolchoes.com.br/apirest.php/Ticket/1723/Document',
+  url: 'https://suporte.rodriguescolchoes.com.br/apirest.php/Ticket/2208/Document',
   qs: {'': ''},
   headers: {
     'Content-Type': 'multipart/form-data; boundary=---011000010111000001101001',
     'User-Agent': 'insomnia/10.3.1',
     'App-Token': '017KVE1WqVngF1AJMw8iy3c0j5XNOzZw8XG06IGC',
     Authorization: 'user_token 7pSjNh9fxrHuBtrOlVGtKOfLX4QeqGJvuIgqAPuT',
-    'Session-Token': 'ohlgf6b31djqjcfgjc1jrl6jsa'
+    'Session-Token': 'sduebiofauln00lf9qpleeloh0'
   },
   formData: {
     uploadManifest: '{"input": {"name": "Imagem do Chamado", "_filename": ["imagem.png"]}}',

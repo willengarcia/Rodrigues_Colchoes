@@ -1,20 +1,11 @@
-require('dotenv').config();
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const axios = require('axios');
 const fs = require('fs');
 const path = require('path');
 const request = require('request');
 const FormData = require('form-data');
-const entidades = ['Manutenção', 'Financeiro', 'Informática'] 
-const categoriaIDs = {
-  'Internet': 100, 'Sistema': 23, 'Impressora': 43, 'Outros_Inf': 103,
-  'Caixa': 97, 'Refaturamento': 98, 'Comprovantes': 99, 'Outros_Fin': 102,
-  'Elétrica': 94, 'Hidráulica': 95, 'Porta enrolar/automática': 96, 'Outros_Mtn': 101
-};
 
-const categorias_DTI = ['Internet', 'Sistema', 'Impressora', 'Outros']
-const categorias_DFN = ['Caixa', 'Refaturamento', 'Comprovantes', 'Outros']
-const categorias_MTN = ['Elétrica', 'Hidráulica', 'Porta enrolar/automática', 'Outros']
+const categorias = ['Internet', 'Computador', 'Impressora', 'Sistema'];
 let userChoices = {};
 let timers = {}; 
 const tempDir = path.join(__dirname, 'temp');
@@ -46,60 +37,31 @@ client.on('message', async (message) => {
 
   if (!userChoices[from].nome) {
     userChoices[from].nome = incomingMsg;
-    await message.reply('📋 Agora, escolha o departamento do problema:' + 
-      entidades.map((c, i) => `👉 \n${i + 1}. ${c}`).join('')
-    );
-    return;
-  }
-
-  if (!userChoices[from].departamento) {
-    const departamentoIndex = parseInt(incomingMsg) - 1;
-    if (departamentoIndex >= 0 && departamentoIndex < entidades.length) {
-      userChoices[from].departamento = entidades[departamentoIndex];
-
-      let categorias;
-      if (departamentoIndex === 0) categorias = categorias_MTN; // Manutenção
-      else if (departamentoIndex === 1) categorias = categorias_DFN; // Financeiro
-      else categorias = categorias_DTI; // Informática
-
-      await message.reply('Escolha a categoria do problema:' + 
-        categorias.map((c, i) => `\n${i + 1}. ${c}`).join('')
-      );
-    } else {
-      await message.reply('Opção inválida. Escolha um número entre 1 e ' + entidades.length);
-    }
+    await message.reply('📋 Agora, escolha a *categoria* do seu problema:\n' + categorias.map((c, i) => `👉 *${i + 1}.* ${c}`).join('\n'));
     return;
   }
 
   if (!userChoices[from].categoria) {
-    let categorias;
-    if (userChoices[from].departamento === 'Manutenção') categorias = categorias_MTN;
-    else if (userChoices[from].departamento === 'Financeiro') categorias = categorias_DFN;
-    else categorias = categorias_DTI;
-  
     const categoriaIndex = parseInt(incomingMsg) - 1;
     if (categoriaIndex >= 0 && categoriaIndex < categorias.length) {
-      const categoriaEscolhida = categorias[categoriaIndex];
-      userChoices[from].categoria = categoriaEscolhida;
-      userChoices[from].categoriaId = categoriaIDs[categoriaEscolhida]; // Armazena o ID da categoria
-      await message.reply('Descreva o problema que está enfrentando.');
+      userChoices[from].categoria = categorias[categoriaIndex];
+      await message.reply('📝 Perfeito! Agora, descreva o problema que você está enfrentando.');
     } else {
-      await message.reply('Opção inválida. Escolha um número entre 1 e ' + categorias.length);
+      await message.reply('⚠️ Opção inválida. Escolha um número entre *1* e *' + categorias.length + '*');
     }
     return;
   }
-  
 
   if (!userChoices[from].descricao) {
     userChoices[from].descricao = incomingMsg;
-    await message.reply('Deseja enviar uma imagem? Responda com *Sim* ou *Não*.');
+    await message.reply('📷 Deseja enviar uma imagem do problema? *Responda com Sim ou Não*');
     return;
   }
 
   if (!userChoices[from].imagem && (incomingMsg.toLowerCase() === 'sim' || incomingMsg.toLowerCase() === 'não')) {
     userChoices[from].imagem = incomingMsg.toLowerCase() === 'sim';
     if (userChoices[from].imagem) {
-      await message.reply('Envie a imagem agora.');
+      await message.reply('📸 Envie agora a imagem do problema.');
       return;
     }
   }
@@ -150,41 +112,30 @@ client.on('message', async (message) => {
   try {
     const sessionToken = await getSessionToken();
     if (!sessionToken) {
-      await message.reply('Erro ao autenticar no sistema de chamados.');
+      await message.reply('❌ Erro ao conectar ao sistema de chamados. Tente novamente mais tarde.');
       return;
     }
 
     const user = await getUserIdByFilial(userChoices[from].filial, sessionToken);
     if (!user) {
-      await message.reply('Filial não encontrada.');
+      await message.reply('Filial não encontrada. Por favor, refaça o chamado');
       return;
-    } 
-
-    let chamado; // Variável chamada declarada antes do bloco if
-
-    if (userChoices[from].departamento === 'Manutenção') {
-      chamado = await createTicket(userChoices[from], 3, userChoices[from].categoriaId, sessionToken);
-    } else if (userChoices[from].departamento === 'Financeiro') {
-      chamado = await createTicket(userChoices[from], 4, userChoices[from].categoriaId, sessionToken);
-    } else {
-      chamado = await createTicket(userChoices[from], 2, userChoices[from].categoriaId, sessionToken);
     }
-    
+
+    const chamado = await createTicket({ ...userChoices[from], from }, sessionToken);
     if (!chamado) {
-      await message.reply('Erro ao criar chamado.');
+      await message.reply('❌ Não conseguimos criar seu chamado. Tente novamente.');
       return;
     }
-    
+
     await setTicketRequester(chamado.id, user["2"], sessionToken);
-    
+
     if (userChoices[from].filePath) {
       console.log("Caminho do arquivo: ", userChoices[from].filePath);
       await uploadImageToTicket(chamado.id, userChoices[from].filePath, sessionToken);
     }
-    
-    await message.reply(`✅ Chamado criado com sucesso! ID: ${chamado.id}`);
+    await message.reply(`✅ *Chamado criado com sucesso!*\n\n🆔 *ID:* ${chamado.id}\n🧑‍💻 *Nome:* ${userChoices[from].nome}\n📞 *Número:* ${from.split('@c.us')}\n🏢 *Filial:* ${userChoices[from].filial}\n📂 *Categoria:* ${userChoices[from].categoria}\n📖 *Descrição:* ${userChoices[from].descricao}\n\n🔍 Acompanhe o chamado no suporte!`);
     delete userChoices[from];
-    
   } catch (error) {
     console.error('Erro ao criar chamado:', error.response?.data || error.message);
     await message.reply('❌ Erro ao criar seu chamado.');
@@ -192,12 +143,11 @@ client.on('message', async (message) => {
 });
 
 async function getSessionToken() {
-  console.log(process.env.GLPI_URL)
   try {
-    const response = await axios.get(`${process.env.GLPI_URL}/initSession`, {
+    const response = await axios.get('https://suporte.rodriguescolchoes.com.br/apirest.php/initSession', {
       headers: {
-        'App-Token': `${process.env.GLPI_APP}`,
-        'Authorization': `user_token ${process.env.GLPI_TOKEN}`
+        'Authorization': 'user_token 7pSjNh9fxrHuBtrOlVGtKOfLX4QeqGJvuIgqAPuT',
+        'App-Token': '017KVE1WqVngF1AJMw8iy3c0j5XNOzZw8XG06IGC'
       }
     });
     return response.data.session_token;
@@ -209,7 +159,7 @@ async function getSessionToken() {
 
 async function getUserIdByFilial(filialName, sessionToken) {
   try {
-    const response = await axios.get(`${process.env.GLPI_URL}/search/User`, {
+    const response = await axios.get('https://suporte.rodriguescolchoes.com.br/apirest.php/search/User', {
       headers: { 'Session-Token': sessionToken },
       params: { 'criteria[0][field]': 1, 'criteria[0][searchtype]': 'contains', 'criteria[0][value]': filialName }
     });
@@ -221,19 +171,17 @@ async function getUserIdByFilial(filialName, sessionToken) {
   }
 }
 
-async function createTicket(userData, departamento_ID, categoria_ID, sessionToken) {
+async function createTicket(userData, sessionToken) {
   try {
-    const response = await axios.post(`${process.env.GLPI_URL}/Ticket`, {
+    const response = await axios.post('https://suporte.rodriguescolchoes.com.br/apirest.php/Ticket', {
       input: {
         name: userData.categoria,
-        content: `${userData.descricao}\n\nNome: ${userData.nome}\nNúmero: ${userData.filial}`,
+        content: `${userData.descricao}\n\nNome: ${userData.nome}\nFilial: ${userData.filial}\nContato: ${userData.from.replace('@c.us', '')}`,
         type: 2,
         priority: '2',
-        itilcategories_id:categoria_ID
       }
     }, { headers: { 'Session-Token': sessionToken } });
     console.log("ID do ticket: ", response.data.id);
-    await setEntityTicket(response.data.id, departamento_ID, sessionToken)
     return response.data;
   } catch (error) {
     console.error('Erro ao criar chamado:', error.response?.data || error.message);
@@ -271,20 +219,19 @@ async function uploadImageToTicket(ticketId, filePath, sessionToken) {
   const headers = {
     'Content-Type': 'multipart/form-data',
     'User-Agent': 'insomnia/10.3.1',
-    'App-Token': `${process.env.GLPI_APP}`,
-    'Authorization': `user_token ${process.env.GLPI_TOKEN}`,
+    'App-Token': '017KVE1WqVngF1AJMw8iy3c0j5XNOzZw8XG06IGC',
     'Session-Token': sessionToken
   };
 
   try {
     // Envia a imagem para o GLPI
     const response = await axios.post(
-      `${process.env.GLPI_URL}/Ticket/${ticketId}/Document`,
+      `https://suporte.rodriguescolchoes.com.br/apirest.php/Ticket/${ticketId}/Document`,
       formData,
       { headers: headers }
     );
 
-    console.log('Resposta da API ao enviar imagem:', response.data);
+    console.log('Resposta da API ao enviar imagem:', response.data.upload_result);
 
     if (response.data.upload_result && response.data.upload_result.filename.length > 0) {
       console.log('✅ ID da imagem:', response.data.id);
@@ -309,12 +256,12 @@ async function linkDocumentToTicket(documentId, ticketId, sessionToken) {
 
   try {
     const response = await axios.post(
-      `${process.env.GLPI_URL}/Document_Item`,
+      `https://suporte.rodriguescolchoes.com.br/apirest.php/Document_Item`,
       requestBody,
       {
         headers: {
-          'App-Token': `${process.env.GLPI_APP}`,
-          'Authorization': `user_token ${process.env.GLPI_TOKEN}`,
+          'App-Token': '017KVE1WqVngF1AJMw8iy3c0j5XNOzZw8XG06IGC',
+          'Authorization': 'user_token 7pSjNh9fxrHuBtrOlVGtKOfLX4QeqGJvuIgqAPuT',
           "Session-Token": sessionToken,
           "Content-Type": "application/json"
         }
@@ -328,7 +275,7 @@ async function linkDocumentToTicket(documentId, ticketId, sessionToken) {
 
 async function setTicketRequester(ticketId, userId, sessionToken) {
   try {
-    await axios.post(`${process.env.GLPI_URL}/Ticket_User`, {
+    await axios.post('https://suporte.rodriguescolchoes.com.br/apirest.php/Ticket_User', {
       input: {
         tickets_id: ticketId,
         users_id: userId,
@@ -337,26 +284,8 @@ async function setTicketRequester(ticketId, userId, sessionToken) {
     }, {
       headers: {
         'Session-Token': sessionToken,
-        'App-Token': process.env.GLPI_APP,
-        'Authorization': `user_token ${process.env.GLPI_TOKEN}` 
-      }
-    });
-  } catch (error) {
-    console.error('Erro ao definir requerente:', error.response?.data || error.message);
-  }
-}
-
-async function setEntityTicket(ticketId, entity_id, sessionToken) {
-  try {
-    await axios.put(`${process.env.GLPI_URL}/Ticket/${ticketId}`, {
-      input: {
-        entities_id: entity_id
-      }
-    }, {
-      headers: {
-        'Session-Token': sessionToken,
-        'App-Token': process.env.GLPI_APP,
-        'Authorization': `user_token ${process.env.GLPI_TOKEN}` 
+        'App-Token': '017KVE1WqVngF1AJMw8iy3c0j5XNOzZw8XG06IGC',
+        'Authorization': 'user_token 7pSjNh9fxrHuBtrOlVGtKOfLX4QeqGJvuIgqAPuT'
       }
     });
   } catch (error) {
