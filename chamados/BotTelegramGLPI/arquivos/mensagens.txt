@@ -1,0 +1,126 @@
+  // mensagem com formatação HTML
+  await ctx.reply(messageWelcome, { parse_mode: 'HTML' });
+
+  const imageUrl = 'https://imgur.com/a/DKxJgp6'; // colocar url da imagem (serve para o pix)
+  await ctx.replyWithPhoto(imageUrl, {});
+  // botões pra o usuário interagir
+  await ctx.reply('Escolha uma opção:', {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          { text: '📦 COMPRAR', callback_data: 'comprar' },
+          { text: '💸 ADD SALDO', callback_data: 'add saldo' }
+        ]
+      ]
+    }
+  });
+
+
+
+model BotConfig {
+  id             Int     @id @default(autoincrement())
+  laraName       String  @default("@test")
+  laraKey        String  @default("@test")
+  botCompra      String  @default("https://a.imagem.app/o3BDGE.jpeg")
+  mainImg        String  @default("https://a.imagem.app/o3BDGE.jpeg")
+  supportUser    String  @default("@test")
+  channelUser    String  @default("@test")
+  isOn           Boolean @default(true)
+  payAuto        String  @default("pagbank")
+  randomPix      String?
+  randomPixPb    String?
+  timeExchange   Int     @default(5)
+  dbVersion      Int     @default(9)
+}
+
+model Price {
+  id         Int     @id @default(autoincrement())
+  priceName  String
+  priceType  String
+  price      Float
+}
+
+model Sale {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  itemId    Int
+  price     Float
+  timestamp DateTime @default(now())
+  user      User     @relation("UserSales", fields: [userId], references: [id])
+  item      Item     @relation("ItemSales", fields: [itemId], references: [id])
+}
+
+model Item {
+  id          Int           @id @default(autoincrement())
+  categoryId  Int
+  subCategoryId Int?
+  name        String
+  price       Float
+  link        String
+  imagePath   String
+  users       User[]        @relation("UserPurchases")
+  sales       Sale[]        @relation("ItemSales")
+  category    Category      @relation(fields: [categoryId], references: [id])
+  subCategory SubCategory?  @relation(fields: [subCategoryId], references: [id]) // Relacionamento opcional
+}
+
+model Category {
+  id            Int           @id @default(autoincrement())
+  name          String        @unique
+  items         Item[]
+  subCategories SubCategory[] // Relacionamento inverso com SubCategory
+}
+
+model SubCategory {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique
+  categoryId  Int
+  category    Category   @relation(fields: [categoryId], references: [id])
+  items       Item[]
+}
+
+model User {
+  id                Int     @id @default(autoincrement())
+  username          String  @unique
+  balance           Float  @default(0)
+  balanceDiamonds   Float  @default(0)
+  agreedTos         Boolean @default(false)
+  lastBought        DateTime?
+  isActionPending   Boolean @default(false)
+  isBlacklisted     Boolean @default(false)
+  refer             Int?
+  userId            String @unique
+  email             String @unique
+  sales             Sale[]  @relation("UserSales")
+  purchasedItems    Item[]  @relation("UserPurchases")
+}
+model Gift {
+  token     String   @id
+  value     Int
+}
+
+model Token {
+  typeToken   String   @id
+  clientId    String
+  clientSecret String
+  nameCertPem String
+  nameCertKey String
+  bearerTk    String
+}
+
+model SoldBalance {
+  id             Int      @id @default(autoincrement())
+  type           String
+  value          Float
+  owner          Int
+  quantity       Int      @default(1)
+  addBalanceDate DateTime @default(now())
+}
+
+model ValueConfig {
+  transactionType String
+  minValue        Float
+  bonusValue      Float
+
+  @@unique([transactionType, minValue]) // Adiciona uma chave única combinando transactionType e minValue
+}
