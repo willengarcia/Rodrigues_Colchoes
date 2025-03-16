@@ -173,7 +173,7 @@ client.on('message', async (message) => {
     if (userChoices[from].filePath) {
       console.log("Caminho do arquivo: ", userChoices[from].filePath);
       const entidadeId = entidadesParaIds[userChoices[from].departamento];
-      await uploadImageToTicket(chamado.id, userChoices[from].filePath, sessionToken);
+      await uploadImageToTicket(chamado.id, userChoices[from].filePath, sessionToken,entidadeId);
     }
 
     // Atualiza a entidade do ticket
@@ -245,7 +245,7 @@ function resetUserTimer(user, message) {
   }, 5 * 60 * 1000);
 }
 
-async function uploadImageToTicket(ticketId, filePath, sessionToken) {
+async function uploadImageToTicket(ticketId, filePath, sessionToken, entidade) {
   const formData = new FormData();
   formData.append('uploadManifest', JSON.stringify({
     input: {
@@ -284,7 +284,7 @@ async function uploadImageToTicket(ticketId, filePath, sessionToken) {
     if (response.data.upload_result && response.data.upload_result.filename.length > 0) {
       console.log('✅ ID da imagem:', response.data.id);
       // Chama a função para vincular o documento ao ticket
-      await linkDocumentToTicket(response.data.id, ticketId, sessionToken);
+      await linkDocumentToTicket(response.data.id, ticketId, sessionToken, entidade);
     } else {
       console.error('❌ Erro ao enviar imagem: resposta inesperada da API', response.data);
     }
@@ -293,7 +293,7 @@ async function uploadImageToTicket(ticketId, filePath, sessionToken) {
   }
 }
 
-async function linkDocumentToTicket(documentId, ticketId, sessionToken) {
+async function linkDocumentToTicket(documentId, ticketId, sessionToken, entidade) {
   const requestBody = {
     "input": {
       "documents_id": documentId,
@@ -314,6 +314,7 @@ async function linkDocumentToTicket(documentId, ticketId, sessionToken) {
         }
       }
     );
+    await setEntityTicket(ticketId, entidade, sessionToken)
     console.log(`Documento vinculado ao ticket ${ticketId}, e id de imagem ${documentId}, com a sessao: ${sessionToken}`);
   } catch (error) {
     console.error("❌ Erro ao vincular documento ao ticket:", error.response?.data || error.message);
