@@ -62,9 +62,7 @@ client.on('message', async (message) => {
       else if (departamentoIndex === 1) categorias = categorias_DFN; // Financeiro
       else categorias = categorias_DTI; // Informática
 
-      await message.reply('Escolha a categoria do problema:' + 
-        categorias.map((c, i) => `\n${i + 1}. ${c}`).join('')
-      );
+      await message.reply('📋 Agora, escolha a *categoria* do seu problema:\n' + categorias.map((c, i) => `👉 *${i + 1}.* ${c}`).join('\n'));
     } else {
       await message.reply('Opção inválida. Escolha um número entre 1 e ' + entidades.length);
     }
@@ -82,23 +80,23 @@ client.on('message', async (message) => {
       const categoriaEscolhida = categorias[categoriaIndex];
       userChoices[from].categoria = categoriaEscolhida;
       userChoices[from].categoriaId = categoriaIDs[categoriaEscolhida]; // Armazena o ID da categoria
-      await message.reply('Descreva o problema que está enfrentando.');
+      await message.reply('📝 Perfeito! Agora, descreva o problema que você está enfrentando.');
     } else {
-      await message.reply('Opção inválida. Escolha um número entre 1 e ' + categorias.length);
+      await message.reply('⚠️ Opção inválida. Escolha um número entre *1* e *' + categorias.length + '*');
     }
     return;
   }
 
   if (!userChoices[from].descricao) {
     userChoices[from].descricao = incomingMsg;
-    await message.reply('Deseja enviar uma imagem? Responda com *Sim* ou *Não*.');
+    await message.reply('📷 Deseja enviar uma imagem? Responda com *Sim* ou *Não*.');
     return;
   }
 
   if (!userChoices[from].imagem && (incomingMsg.toLowerCase() === 'sim' || incomingMsg.toLowerCase() === 'não')) {
     userChoices[from].imagem = incomingMsg.toLowerCase() === 'sim';
     if (userChoices[from].imagem) {
-      await message.reply('Envie a imagem agora.');
+      await message.reply('📷 Envie a imagem agora.');
       return;
     }
   }
@@ -155,14 +153,14 @@ client.on('message', async (message) => {
 
     const user = await getUserIdByFilial(userChoices[from].filial, sessionToken);
     if (!user) {
-      await message.reply('Filial não encontrada.');
+      await message.reply('Filial não encontrada. Por favor, refaça o chamado');
       return;
     } 
 
     // Cria o ticket
-    const chamado = await createTicket(userChoices[from], userChoices[from].categoriaId, sessionToken);
+    const chamado = await createTicket({...userChoices[from], from}, userChoices[from].categoriaId, sessionToken);
     if (!chamado) {
-      await message.reply('Erro ao criar chamado.');
+      await message.reply('❌ Não conseguimos criar seu chamado. Tente novamente.');
       return;
     }
 
@@ -178,7 +176,7 @@ client.on('message', async (message) => {
 
     // Atualiza a entidade do ticket
 
-    await message.reply(`✅ Chamado criado com sucesso! ID: ${chamado.id}`);
+    await message.reply(`✅ *Chamado criado com sucesso!*\n\n🆔 *ID:* ${chamado.id}\n🧑‍💻 *Nome:* ${userChoices[from].nome}\n📞 *Número:* ${from.split('@c.us')}\n🏢 *Filial:* ${userChoices[from].filial}\n📂 *Categoria:* ${userChoices[from].categoria}\n📖 *Descrição:* ${userChoices[from].descricao}\n\n🔍 Acompanhe o chamado no suporte!`);
     delete userChoices[from];
     
   } catch (error) {
@@ -223,7 +221,7 @@ async function createTicket(userData, categoria_ID, sessionToken) {
     const response = await axios.post(`${process.env.GLPI_URL}/Ticket`, {
       input: {
         name: userData.categoria,
-        content: `${userData.descricao}\n\nNome: ${userData.nome}\nNúmero: ${userData.filial}`,
+        content: `${userData.descricao}\n\nNome: ${userData.nome}\nFilial: ${userData.filial}\nContato: ${userData.from.replace('@c.us', '')}`,
         type: 2,
         priority: '2',
         itilcategories_id:categoria_ID
