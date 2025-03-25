@@ -1,12 +1,11 @@
 {
-  "name": "bottelegramvendas",
+  "name": "bottelegramglpi",
   "version": "1.0.0",
   "main": "src/index.jts",
   "scripts": {
     "dev": "ts-node-dev --transpile-only src/index.ts",
-    "build": "prisma migrate deploy && tsc",
-    "start": "node dist/server.js",
-    "postinstall": "prisma generate"
+    "build": "tsc",
+    "start": "node dist/server.js"
   },
   "author": "Willen Garcia",
   "license": "Unlicense",
@@ -14,11 +13,9 @@
   "devDependencies": {
     "@types/node": "^22.10.2",
     "@types/pg": "^8.11.10",
-    "prisma": "^6.3.0",
     "ts-node-dev": "^2.0.0"
   },
   "dependencies": {
-    "@prisma/client": "^6.1.0",
     "@telegraf/session": "^2.0.0-beta.7",
     "dotenv": "^16.4.7",
     "kysely": "^0.27.2",
