@@ -25,6 +25,7 @@ if (!fs.existsSync(tempDir)) {
   fs.mkdirSync(tempDir);
 }
 const client = new Client({ authStrategy: new LocalAuth() });
+let sessionToken
 client.on('qr', (qr) => console.log('QR RECEIVED', qr));
 client.on('ready', () => console.log('Bot está pronto!'));
 client.on('message', async (message) => {
@@ -145,7 +146,7 @@ client.on('message', async (message) => {
   }
 
   try {
-    const sessionToken = await getSessionToken();
+    sessionToken = await getSessionToken();
     if (!sessionToken) {
       await message.reply('Erro ao autenticar no sistema de chamados.');
       return;
@@ -182,6 +183,8 @@ client.on('message', async (message) => {
   } catch (error) {
     console.error('Erro ao criar chamado:', error.response?.data || error.message);
     await message.reply('❌ Erro ao criar seu chamado.');
+  }finally{
+    killSession(sessionToken)
   }
 });
 
@@ -357,5 +360,23 @@ async function setEntityTicket(ticketId, entity_id, sessionToken) {
     console.error('Erro ao definir requerente:', error.response?.data || error.message);
   }
 }
+
+async function killSession(sessionToken) {
+  try {
+      const response = await axios.get(`${process.env.GLPI_URL}/killSession`, {
+          headers: {
+              'Content-Type': 'application/json',
+              'Session-Token': sessionToken,
+              'App-Token': `${process.env.GLPI_APP}`
+          }
+      });
+      
+      console.log('Sessão encerrada com sucesso:', response.data);
+      return response.data;
+  } catch (error) {
+      console.error('Erro ao encerrar a sessão:', error.response ? error.response.data : error.message);
+  }
+}
+
 
 client.initialize();
