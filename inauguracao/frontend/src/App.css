@@ -1,38 +1,251 @@
-.App {
+:root {
+  --primary-color: #4361ee;
+  --primary-hover: #3a56d4;
+  --secondary-color: #f8f9fa;
+  --text-color: #2b2d42;
+  --light-text: #6c757d;
+  --border-color: #e9ecef;
+  --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  --transition: all 0.25s cubic-bezier(0.645, 0.045, 0.355, 1);
+}
+
+.form-container {
+  max-width: 560px;
+  margin: 2rem auto;
+  padding: 2.5rem;
+  background: white;
+  box-shadow: var(--shadow);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  transition: var(--transition);
+  border: 1px solid var(--border-color);
+}
+
+.form-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
   text-align: center;
+  color: var(--text-color);
+  line-height: 1.3;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.form-input {
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.5rem;
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  font-size: 1rem;
+  background: var(--secondary-color);
+  transition: var(--transition);
+  color: var(--text-color);
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.form-input::placeholder {
+  color: var(--light-text);
+  opacity: 0.7;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.form-input:focus {
+  border-color: var(--primary-color);
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+  background: white;
+}
+
+.form-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.form-checkbox-group label {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1rem;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: var(--transition);
+  padding: 0.5rem;
+  border-radius: 8px;
+}
+
+.form-checkbox-group label:hover {
+  background: rgba(67, 97, 238, 0.05);
+}
+
+.form-checkbox-group input[type="checkbox"] {
+  width: 1.25rem;
+  height: 1.25rem;
+  accent-color: var(--primary-color);
+  cursor: pointer;
+}
+
+.form-subtotal {
+  font-size: 1.5rem;
+  font-weight: 700;
+  text-align: center;
+  color: var(--text-color);
+  margin: 1rem 0;
+  padding: 1rem;
+  background: rgba(67, 97, 238, 0.05);
+  border-radius: 10px;
+}
+
+.form-button {
+  width: 100%;
+  padding: 1.125rem;
+  background: var(--primary-color);
+  color: white;
+  font-size: 1.05rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: var(--transition);
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.form-button:hover {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+}
+
+.form-button:active {
+  transform: translateY(0);
+}
+
+/* Efeitos de foco para acessibilidade */
+.form-button:focus-visible {
+  outline: 3px solid var(--primary-hover);
+  outline-offset: 2px;
+}
+
+.qr-code-container {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  gap: 1.5rem;
+  text-align: center;
 }
 
-.App-link {
-  color: #61dafb;
+.qr-code-wrapper {
+  padding: 1rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-color);
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+.qr-code-instruction {
+  color: var(--light-text);
+  font-size: 1.1rem;
+  max-width: 80%;
+  margin: 0 auto;
+}
+.product-list {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+  max-height: 200px; /* Limita a altura para evitar que fique muito longa */
+  overflow-y: auto; /* Adiciona scroll caso a lista seja grande */
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.product-list li {
+  padding: 10px;
+  cursor: pointer;
+  transition: background 0.3s ease-in-out;
+  border-bottom: 1px solid #eee;
+}
+
+.product-list li:last-child {
+  border-bottom: none;
+}
+
+.product-list li:hover {
+  background: #f4f4f4;
+}
+
+/* Responsividade */
+@media (max-width: 600px) {
+  .product-list {
+    max-height: 150px;
   }
-  to {
-    transform: rotate(360deg);
+
+  .product-list li {
+    font-size: 14px;
+    padding: 8px;
+  }
+}
+
+
+/* Responsividade avançada */
+@media (max-width: 768px) {
+  .form-container {
+    padding: 2rem;
+    max-width: 95%;
+    margin: 1.5rem auto;
+  }
+  
+  .form-title {
+    font-size: 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .form-container {
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
+  
+  .form-title {
+    font-size: 1.5rem;
+  }
+  
+  .form-input {
+    padding: 0.875rem 1rem;
+  }
+  
+  .form-subtotal {
+    font-size: 1.3rem;
+    padding: 0.875rem;
+  }
+  
+  .form-button {
+    padding: 1rem;
+    font-size: 1rem;
+  }
+}
+
+/* Dark mode opcional */
+@media (prefers-color-scheme: dark) {
+  .form-container {
+    background: #1e1e2e;
+    border-color: #2d2d3d;
+  }
+  
+  .form-title, 
+  .form-checkbox-group label,
+  .form-subtotal {
+    color: #f8f9fa;
+  }
+  
+  .form-input {
+    background: #2d2d3d;
+    border-color: #3d3d4d;
+    color: #f8f9fa;
+  }
+  
+  .form-input:focus {
+    background: #2d2d3d;
   }
 }
