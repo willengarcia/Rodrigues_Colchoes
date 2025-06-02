@@ -378,5 +378,4 @@ async function killSession(sessionToken) {
   }
 }
 
-
 client.initialize();
