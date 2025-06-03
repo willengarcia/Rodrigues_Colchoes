@@ -53,9 +53,9 @@ function FormularioPedido() {
       data: new Date().toLocaleString()
     };
     
-
-    const dataString = JSON.stringify(pedidoData, null, 2);
-    setQrCodeData(dataString);
+    const base64 = btoa(JSON.stringify(pedidoData));
+    const url = `https://willengarcia.github.io/html-css/LeitorQrCodeClean/visualizador.html?dados=${encodeURIComponent(base64)}`;
+    setQrCodeData(url);
     setShowQRCode(true);
     
     
