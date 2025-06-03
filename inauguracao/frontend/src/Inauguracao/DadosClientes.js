@@ -1,14 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import "../../src/App.css"
 
 function FormularioPedido() {
   const [form, setForm] = useState({
+    codVendedor:'',
     nome: '',
     cpf: '',
     email: '',
     endereco: '',
     cep: '',
+    cv: '',
+    auto:'',
+    formaPagamento:'',
     travesseiro: false,
     sanduicheira: false
   });
@@ -16,6 +20,9 @@ function FormularioPedido() {
   const [subtotal, setSubtotal] = useState(0);
   const [qrCodeData, setQrCodeData] = useState(null);
   const [showQRCode, setShowQRCode] = useState(false);
+  const isCPFValid = cpf => /^\d{11}$/.test(cpf);
+  const qrRef = useRef();
+
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -34,29 +41,68 @@ function FormularioPedido() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
-    // Prepara os dados para o QR Code
+    if (!isCPFValid(form.cpf)) {
+      alert('CPF inválido. Deve conter 11 números.');
+      return;
+    }
+
+
     const pedidoData = {
       ...form,
       subtotal: subtotal.toFixed(2),
       data: new Date().toLocaleString()
     };
     
-    // Converte para string JSON
+
     const dataString = JSON.stringify(pedidoData, null, 2);
     setQrCodeData(dataString);
     setShowQRCode(true);
     
-    // Aqui você poderia adicionar o envio para um backend
-    console.log('Dados do pedido:', pedidoData);
+    
   };
+
+  const baixarQRCode = () => {
+  const svg = qrRef.current.querySelector('svg');
+  const svgData = new XMLSerializer().serializeToString(svg);
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  const img = new Image();
+
+  const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+  const url = URL.createObjectURL(svgBlob);
+
+  img.onload = () => {
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
+    URL.revokeObjectURL(url);
+
+    const pngUrl = canvas.toDataURL('image/png');
+    const downloadLink = document.createElement('a');
+    downloadLink.href = pngUrl;
+    downloadLink.download = 'qrcode.png';
+    downloadLink.click();
+  };
+
+  img.src = url;
+};
+
 
   return (
     <div className="form-container">
       {!showQRCode ? (
         <>
           <h2 className="form-title">Formulário de Pedido</h2>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className='formulario'>
+            <input
+              type="text"
+              name="codVendedor"
+              placeholder="Código do Vendedor"
+              value={form.codVendedor}
+              onChange={handleChange}
+              className="form-input"
+              required
+            />
             <input
               type="text"
               name="nome"
@@ -102,7 +148,46 @@ function FormularioPedido() {
               className="form-input"
               required
             />
-            
+
+            <input
+              type="text"
+              name="cv"
+              placeholder="Código de Verificação - Crédito/Débito"
+              value={form.cv}
+              onChange={handleChange}
+              className="form-input"
+            />
+            <input
+              type="text"
+              name="auto"
+              placeholder="Código de Autorização - Crédito/Débito"
+              value={form.auto}
+              onChange={handleChange}
+              className="form-input"
+            />
+
+            <select name="formaPagamento"
+            value={form.formaPagamento}
+            onChange={handleChange}
+            className='pagamentos'
+            required>
+              <option value={''} defaultChecked>
+                Escolha uma forma de pagamento
+              </option>
+              <option value={'DINHEIRO'}>
+                DINHEIRO
+              </option>
+              <option value={'PIX'}>
+                PIX
+              </option>
+              <option value={'CRÉDITO'}>
+                CRÉDITO
+              </option>
+              <option value={'DÉBITO'}>
+                DÉBITO
+              </option>
+            </select>
+
             <div className="form-checkbox-group">
               <label>
                 <input
@@ -133,11 +218,14 @@ function FormularioPedido() {
       ) : (
         <div className="qr-code-container">
           <h2 className="form-title">Seu Pedido foi Registrado!</h2>
-          <div className="qr-code-wrapper">
-          <QRCodeSVG 
-            value={qrCodeData} 
-            size={256}
-            level="H"
+          <div className="qr-code-wrapper" ref={qrRef}>
+            <QRCodeSVG 
+              value={qrCodeData} 
+              size={230}
+              level="H"
+              bgColor="#ffffff"  
+              fgColor="#000000"     
+              includeMargin={true}  
             />
           </div>
           <p className="qr-code-instruction">
@@ -148,6 +236,19 @@ function FormularioPedido() {
             onClick={() => setShowQRCode(false)}
           >
             Voltar ao Formulário
+          </button>
+          <button 
+            className="form-button"
+            onClick={baixarQRCode}
+          >
+            Baixar QR Code
+          </button>
+
+          <button 
+            className="form-button"
+            onClick={() => window.print()}
+          >
+            Imprimir QR Code
           </button>
         </div>
       )}
