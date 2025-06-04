@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import "../../src/App.css"
 
@@ -13,8 +13,9 @@ function FormularioPedido() {
     cv: '',
     auto:'',
     formaPagamento:'',
-    travesseiro: false,
-    sanduicheira: false
+    travesseiro: '',
+    sanduicheiraElgin: '',
+    sanduicheiraMystic: ''
   });
 
   const [subtotal, setSubtotal] = useState(0);
@@ -23,6 +24,27 @@ function FormularioPedido() {
   const isCPFValid = cpf => /^\d{11}$/.test(cpf);
   const qrRef = useRef();
 
+  useEffect(() => {
+    const fetchEndereco = async () => {
+      const cep = form.cep.replace(/\D/g, '');
+      if (cep.length === 8) {
+        try {
+          const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+          const data = await res.json();
+          if (!data.erro) {
+            setForm(prev => ({
+              ...prev,
+              endereco: `${data.logradouro}, ${data.bairro}, ${data.localidade} - ${data.uf}`
+            }));
+          }
+        } catch (error) {
+          console.error('Erro ao buscar CEP:', error);
+        }
+      }
+    };
+
+    fetchEndereco();
+  }, [form.cep]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -31,11 +53,22 @@ function FormularioPedido() {
       [name]: type === 'checkbox' ? checked : value
     }));
 
-    // Atualiza subtotal
     if (type === 'checkbox') {
+      let itemCode = null;
+
+      if (name === 'travesseiro') itemCode = '140144';
+      else if (name === 'sanduicheiraElgin') itemCode = '133729';
+      else if (name === 'sanduicheiraMystic') itemCode = '133444';
+
+      setForm(prev => ({
+        ...prev,
+        [name]: checked ? itemCode : ''
+      }));
+
       const price = 4.99;
       const newSubtotal = checked ? subtotal + price : subtotal - price;
       setSubtotal(newSubtotal);
+      return;
     }
   };
 
@@ -46,6 +79,11 @@ function FormularioPedido() {
       return;
     }
 
+    const exigeCodigo = form.formaPagamento === 'CRÉDITO' || form.formaPagamento === 'DÉBITO';
+    if (exigeCodigo && (!form.cv.trim() || !form.auto.trim())) {
+      alert('Preencha o Código de Verificação e o Código de Autorização.');
+      return;
+    }
 
     const pedidoData = {
       ...form,
@@ -92,6 +130,7 @@ function FormularioPedido() {
     <div className="form-container">
       {!showQRCode ? (
         <>
+          <img src='./logoGrande.png' className='logo'></img>
           <h2 className="form-title">Formulário de Pedido</h2>
           <form onSubmit={handleSubmit} className='formulario'>
             <input
@@ -130,15 +169,7 @@ function FormularioPedido() {
               className="form-input"
               required
             />
-            <input
-              type="text"
-              name="endereco"
-              placeholder="Endereço"
-              value={form.endereco}
-              onChange={handleChange}
-              className="form-input"
-              required
-            />
+
             <input
               type="text"
               name="cep"
@@ -151,11 +182,21 @@ function FormularioPedido() {
 
             <input
               type="text"
+              name="endereco"
+              placeholder="Endereço"
+              value={form.endereco}
+              onChange={handleChange}
+              className="form-input"
+              required
+            />
+
+            <input
+              type="text"
               name="cv"
               placeholder="Código de Verificação - Crédito/Débito"
               value={form.cv}
               onChange={handleChange}
-              className="form-input"
+              className={`form-input ${['CRÉDITO', 'DÉBITO'].includes(form.formaPagamento) && !form.cv ? 'input-required' : ''}`}
             />
             <input
               type="text"
@@ -163,7 +204,7 @@ function FormularioPedido() {
               placeholder="Código de Autorização - Crédito/Débito"
               value={form.auto}
               onChange={handleChange}
-              className="form-input"
+              className={`form-input ${['CRÉDITO', 'DÉBITO'].includes(form.formaPagamento) && !form.auto ? 'input-required' : ''}`}
             />
 
             <select name="formaPagamento"
@@ -193,7 +234,7 @@ function FormularioPedido() {
                 <input
                   type="checkbox"
                   name="travesseiro"
-                  checked={form.travesseiro}
+                  checked={!!form.travesseiro}
                   onChange={handleChange}
                 />
                 Travesseiro (R$ 4,99)
@@ -201,11 +242,20 @@ function FormularioPedido() {
               <label>
                 <input
                   type="checkbox"
-                  name="sanduicheira"
-                  checked={form.sanduicheira}
+                  name="sanduicheiraElgin"
+                  checked={!!form.sanduicheiraElgin}
                   onChange={handleChange}
                 />
-                Sanduicheira (R$ 4,99)
+                Sanduicheira Elgin (R$ 4,99)
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  name="sanduicheiraMystic"
+                  checked={!!form.sanduicheiraMystic}
+                  onChange={handleChange}
+                />
+                Sanduicheira Mystic (R$ 4,99)
               </label>
             </div>
             
@@ -217,6 +267,7 @@ function FormularioPedido() {
         </>
       ) : (
         <div className="qr-code-container">
+          <img src='./logoGrande.png' className='logo'></img>
           <h2 className="form-title">Seu Pedido foi Registrado!</h2>
           <div className="qr-code-wrapper" ref={qrRef}>
             <QRCodeSVG 

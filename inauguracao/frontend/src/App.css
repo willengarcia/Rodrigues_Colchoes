@@ -1,17 +1,25 @@
 :root {
-  --primary-color: #4361ee;
-  --primary-hover: #3a56d4;
-  --secondary-color: #f8f9fa;
-  --text-color: #2b2d42;
-  --light-text: #6c757d;
-  --border-color: #e9ecef;
+  --primary-color: #1e3a8a; /* Azul marinho */
+  --primary-hover: #1e40af; /* Azul marinho mais claro */
+  --secondary-color: #f0f4ff; /* Azul muito claro */
+  --text-color: #1e1e2e; /* Azul escuro */
+  --light-text: #6b7280; /* Cinza suave */
+  --border-color: #d1d5db; /* Cinza claro */
   --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   --transition: all 0.25s cubic-bezier(0.645, 0.045, 0.355, 1);
 }
-
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+.logo {
+  width: 14rem;
+  margin: auto;
+}
 .form-container {
   max-width: 34rem;
-  margin: 2rem auto;
+  margin:auto;
   padding: 2.5rem;
   background: white;
   box-shadow: var(--shadow);
@@ -56,7 +64,7 @@
 .form-input:focus {
   border-color: var(--primary-color);
   outline: none;
-  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+  box-shadow: 0 0 0 3px rgba(30, 58, 138, 0.15); /* Azul marinho claro */
   background: white;
 }
 
@@ -80,7 +88,7 @@
 }
 
 .form-checkbox-group label:hover {
-  background: rgba(67, 97, 238, 0.05);
+  background: rgba(30, 58, 138, 0.05); /* Azul marinho suave */
 }
 
 .form-checkbox-group input[type="checkbox"] {
@@ -97,7 +105,7 @@
   color: var(--text-color);
   margin: 1rem 0;
   padding: 1rem;
-  background: rgba(67, 97, 238, 0.05);
+  background: rgba(30, 58, 138, 0.05); /* Azul marinho suave */
   border-radius: 10px;
 }
 
@@ -145,6 +153,7 @@
   max-width: 80%;
   margin: 0 auto;
 }
+
 .qr-code-wrapper {
   background-color: #1a1a2e; /* fundo escuro */
   padding: 20px;             /* margem interna */
@@ -155,6 +164,7 @@
 .qr-code-container {
   text-align: center;
 }
+
 .product-list {
   list-style: none;
   padding: 0;
@@ -181,6 +191,10 @@
 .product-list li:hover {
   background: #f4f4f4;
 }
+
+.input-required {
+  border: 2px solid red;
+}
 .pagamentos {
   padding: 1rem 1.25rem;
   border: 2px solid var(--border-color);
@@ -189,6 +203,7 @@
   background: var(--secondary-color);
   transition: var(--transition);
 }
+
 /* Responsividade */
 @media (max-width: 600px) {
   .product-list {
@@ -201,13 +216,13 @@
   }
 }
 
-
 /* Responsividade avançada */
 @media (max-width: 768px) {
   .form-container {
     padding: 2rem;
     max-width: 95%;
-    margin: 1.5rem auto;
+    margin: auto;
+    border-radius: 1px 1px 1px 1px
   }
   
   .form-title {
@@ -218,7 +233,7 @@
 @media (max-width: 480px) {
   .form-container {
     padding: 1.5rem;
-    border-radius: 12px;
+    border-radius: 1px 1px 1px 1px
   }
   
   .form-title {
@@ -243,7 +258,7 @@
 /* Dark mode opcional */
 @media (prefers-color-scheme: dark) {
   .form-container {
-    background: #1e1e2e;
+    background: #191950;
     border-color: #2d2d3d;
   }
   
@@ -254,7 +269,7 @@
   }
   
   .form-input {
-    background: #2d2d3d;
+    background: #03032d;
     border-color: #3d3d4d;
     color: #f8f9fa;
   }
