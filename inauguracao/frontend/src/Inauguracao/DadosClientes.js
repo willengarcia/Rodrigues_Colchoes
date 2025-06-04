@@ -15,7 +15,8 @@ function FormularioPedido() {
     formaPagamento:'',
     travesseiro: '',
     sanduicheiraElgin: '',
-    sanduicheiraMystic: ''
+    sanduicheiraMystic: '',
+    qtdTravesseiro: ''
   });
 
   const [subtotal, setSubtotal] = useState(0);
@@ -46,6 +47,33 @@ function FormularioPedido() {
     fetchEndereco();
   }, [form.cep]);
 
+  useEffect(() => {
+    const precoTravesseiro = 4.99;
+    const precoSanduicheira = 4.99;
+
+    let novoSubtotal = 0;
+
+    if (form.travesseiro) {
+      const quantidade = parseInt(form.qtdTravesseiro) || 0;
+      novoSubtotal += precoTravesseiro * quantidade;
+    }
+
+    if (form.sanduicheiraElgin) {
+      novoSubtotal += precoSanduicheira;
+    }
+
+    if (form.sanduicheiraMystic) {
+      novoSubtotal += precoSanduicheira;
+    }
+
+    setSubtotal(novoSubtotal);
+  }, [
+    form.travesseiro,
+    form.sanduicheiraElgin,
+    form.sanduicheiraMystic,
+    form.qtdTravesseiro
+  ]);
+
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setForm(prev => ({
@@ -64,10 +92,6 @@ function FormularioPedido() {
         ...prev,
         [name]: checked ? itemCode : ''
       }));
-
-      const price = 4.99;
-      const newSubtotal = checked ? subtotal + price : subtotal - price;
-      setSubtotal(newSubtotal);
       return;
     }
   };
@@ -227,6 +251,15 @@ function FormularioPedido() {
               <option value={'DÉBITO'}>
                 DÉBITO
               </option>
+            </select>
+            <select name="qtdTravesseiro"
+              value={form.qtdTravesseiro}
+              onChange={handleChange}
+              className='pagamentos'
+              required>
+              <option value={''} defaultChecked>Quantidade travesseiro</option>
+              <option value={'1'}>1</option>
+              <option value={'2'}>2</option>
             </select>
 
             <div className="form-checkbox-group">
