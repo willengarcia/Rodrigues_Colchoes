@@ -18,7 +18,6 @@ class AddVendaController {
             const { codVendedor, nome, cpf, email, cep, endereco, formaPagamento, cv, auto, qtdTravesseiro, travesseiro, sanduicheiraElgin, sanduicheiraMystic, subtotal, loja, } = req.body;
             // Pega o buffer da imagem (se existir), via multer no middleware
             const imageBuffer = (_a = req.file) === null || _a === void 0 ? void 0 : _a.buffer;
-            console.log("Arquivo recebido:", req.file); // <- deve mostrar info do multer
             const addVendaService = new addUserService_1.AddVendaService();
             try {
                 const venda = yield addVendaService.execute({

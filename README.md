@@ -45,3 +45,5 @@ Verificação dos protocolos aprovados
 Opção para efetuar pagamento
 Atualização do status para "pago"
 Upload do comprovante de pagamento
+
+DATABASE_URL="postgresql://postgres:pedrinha.05@localhost:5432/inauguracao"

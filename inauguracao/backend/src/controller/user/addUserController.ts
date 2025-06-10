@@ -23,7 +23,6 @@ export class AddVendaController {
 
     // Pega o buffer da imagem (se existir), via multer no middleware
     const imageBuffer = req.file?.buffer;
-    console.log("Arquivo recebido:", req.file); // <- deve mostrar info do multer
 
     const addVendaService = new AddVendaService();
 
