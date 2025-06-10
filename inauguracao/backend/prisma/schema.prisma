@@ -1,0 +1,43 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL") // Adicione a URL do seu banco de dados PostgreSQL
+}
+
+model Venda {
+  id                  String   @id @default(uuid())
+  loja                String
+  codVendedor         String
+  nome                String
+  cpf                 String
+  email               String
+  cep                 String
+  endereco            String
+  formaPagamento      FormaPagamento
+  cv                  String?  // Opcional, dependendo da forma de pagamento
+  auto                String?  // Opcional, dependendo da forma de pagamento
+  qtdTravesseiro      Int
+  travesseiro         String
+  sanduicheiraElgin   String
+  sanduicheiraMystic  String
+  subtotal            Float
+  status              StatusVenda @default(PENDING) // true, false ou pendente
+  linkImage           String
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+enum FormaPagamento {
+  DINHEIRO
+  PIX
+  CREDITO
+  DEBITO
+}
+
+enum StatusVenda {
+  PENDING
+  CONFIRMED
+}

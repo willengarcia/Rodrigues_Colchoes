@@ -1,0 +1,88 @@
+/* Estilo geral */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f2f2f2;
+  margin: 0;
+  padding: 0;
+}
+
+/* Container principal */
+div {
+  padding: 20px;
+}
+
+/* Título */
+h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Botões de lojas */
+.botoes-lojas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.botoes-lojas button {
+  background-color: #007bff;
+  border: none;
+  color: white;
+  padding: 10px 18px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-weight: bold;
+}
+
+.botoes-lojas button:hover {
+  background-color: #0056b3;
+}
+
+.botoes-lojas button.selecionada {
+  background-color: #28a745;
+}
+
+/* Container dos cards */
+.cards-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+}
+
+/* Card individual */
+.card {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  padding: 20px;
+  width: 300px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+/* Imagem */
+.card img {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+
+/* Texto do card */
+.card p {
+  margin: 6px 0;
+  font-size: 14px;
+}
+
+.card strong {
+  color: #333;
+}

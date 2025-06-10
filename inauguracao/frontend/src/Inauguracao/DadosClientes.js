@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import { QRCodeSVG } from 'qrcode.react';
 import "../../src/App.css"
 
 function FormularioPedido() {
   const [form, setForm] = useState({
+    loja:'',
     codVendedor:'',
     nome: '',
     cpf: '',
@@ -12,6 +15,7 @@ function FormularioPedido() {
     cep: '',
     cv: '',
     auto:'',
+    image: null,
     formaPagamento:'',
     travesseiro: '',
     sanduicheiraElgin: '',
@@ -48,8 +52,8 @@ function FormularioPedido() {
   }, [form.cep]);
 
   useEffect(() => {
-    const precoTravesseiro = 4.99;
-    const precoSanduicheira = 4.99;
+    const precoTravesseiro = 9.99;
+    const precoSanduicheira = 9.99;
 
     let novoSubtotal = 0;
 
@@ -76,24 +80,34 @@ function FormularioPedido() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
 
     if (type === 'checkbox') {
-      let itemCode = null;
+      let itemCode = '';
 
-      if (name === 'travesseiro') itemCode = '140144';
-      else if (name === 'sanduicheiraElgin') itemCode = '133729';
-      else if (name === 'sanduicheiraMystic') itemCode = '133444';
+      if (name === 'travesseiro') itemCode = checked ? '140144' : '';
+      else if (name === 'sanduicheiraElgin') itemCode = checked ? '133729' : '';
+      else if (name === 'sanduicheiraMystic') itemCode = checked ? '133444' : '';
 
       setForm(prev => ({
         ...prev,
-        [name]: checked ? itemCode : ''
+        [name]: itemCode
       }));
       return;
     }
+
+    if (type === 'file') {
+      setForm(prev => ({
+        ...prev,
+        [name]: e.target.files[0]
+      }));
+      return;
+    }
+
+    // Atualiza campos padrão (text, email, select, etc)
+    setForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
   };
 
   const handleSubmit = (e) => {
@@ -119,36 +133,71 @@ function FormularioPedido() {
     const url = `https://willengarcia.github.io/html-css/LeitorQrCodeClean/visualizador.html?dados=${encodeURIComponent(base64)}`;
     setQrCodeData(url);
     setShowQRCode(true);
-    
-    
+    const formData = new FormData();
+    formData.append("loja", form.loja.toUpperCase());
+    formData.append("codVendedor", form.codVendedor);
+    formData.append("nome", form.nome);
+    formData.append("cpf", form.cpf);
+    formData.append("email", form.email);
+    formData.append("cep", form.cep);
+    formData.append("endereco", form.endereco);
+    formData.append("formaPagamento", form.formaPagamento);
+    formData.append("cv", form.cv || "");
+    formData.append("auto", form.auto || "");
+    formData.append("qtdTravesseiro", form.qtdTravesseiro);
+    if (form.travesseiro) formData.append("travesseiro", form.travesseiro);
+    if (form.sanduicheiraElgin) formData.append("sanduicheiraElgin", form.sanduicheiraElgin);
+    if (form.sanduicheiraMystic) formData.append("sanduicheiraMystic", form.sanduicheiraMystic);
+
+
+
+    formData.append("subtotal", subtotal.toFixed(2));
+    if (form.image) {
+      formData.append("image", form.image);
+    }
+
+    // Chamada à API
+    axios.post(`${process.env.REACT_APP_API_URL}/criarVenda`, formData)
+    .then((response) => {
+      console.log("Venda enviada com sucesso:", response.data);
+    })
+    .catch((error) => {
+      console.error("Erro ao enviar a venda:", error);
+    });
+
   };
 
   const baixarQRCode = () => {
-  const svg = qrRef.current.querySelector('svg');
-  const svgData = new XMLSerializer().serializeToString(svg);
-  const canvas = document.createElement('canvas');
-  const ctx = canvas.getContext('2d');
-  const img = new Image();
+    const svg = qrRef.current.querySelector('svg');
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const img = new Image();
 
-  const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-  const url = URL.createObjectURL(svgBlob);
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(svgBlob);
 
-  img.onload = () => {
-    canvas.width = img.width;
-    canvas.height = img.height;
-    ctx.drawImage(img, 0, 0);
-    URL.revokeObjectURL(url);
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(url);
 
-    const pngUrl = canvas.toDataURL('image/png');
-    const downloadLink = document.createElement('a');
-    downloadLink.href = pngUrl;
-    downloadLink.download = 'qrcode.png';
-    downloadLink.click();
+      const pngUrl = canvas.toDataURL('image/png');
+      const downloadLink = document.createElement('a');
+      downloadLink.href = pngUrl;
+      downloadLink.download = 'qrcode.png';
+      downloadLink.click();
+    };
+
+    img.src = url;
   };
 
-  img.src = url;
-};
+  const navigate = useNavigate();
 
+  const consultarVenda = () => {
+    navigate("/lojas");
+  };
 
   return (
     <div className="form-container">
@@ -157,6 +206,15 @@ function FormularioPedido() {
           <img src='./logoGrande.png' className='logo'></img>
           <h2 className="form-title">Formulário de Pedido</h2>
           <form onSubmit={handleSubmit} className='formulario'>
+            <input
+              type="text"
+              name="loja"
+              placeholder="Código da Filial - Ex.: 3F"
+              value={form.loja}
+              onChange={handleChange}
+              className="form-input"
+              required
+            />
             <input
               type="text"
               name="codVendedor"
@@ -230,6 +288,13 @@ function FormularioPedido() {
               onChange={handleChange}
               className={`form-input ${['CRÉDITO', 'DÉBITO'].includes(form.formaPagamento) && !form.auto ? 'input-required' : ''}`}
             />
+            <input
+              type="file"
+              name="image"
+              accept="image/*"
+              onChange={handleChange}
+              className="form-input"
+            />
 
             <select name="formaPagamento"
             value={form.formaPagamento}
@@ -245,10 +310,10 @@ function FormularioPedido() {
               <option value={'PIX'}>
                 PIX
               </option>
-              <option value={'CRÉDITO'}>
+              <option value={'CREDITO'}>
                 CRÉDITO
               </option>
-              <option value={'DÉBITO'}>
+              <option value={'DEBITO'}>
                 DÉBITO
               </option>
             </select>
@@ -267,28 +332,28 @@ function FormularioPedido() {
                 <input
                   type="checkbox"
                   name="travesseiro"
-                  checked={!!form.travesseiro}
+                  checked={form.travesseiro === '140144'}
                   onChange={handleChange}
                 />
-                Travesseiro (R$ 4,99)
+                Travesseiro (R$ 9,99)
               </label>
               <label>
                 <input
                   type="checkbox"
                   name="sanduicheiraElgin"
-                  checked={!!form.sanduicheiraElgin}
+                  checked={form.sanduicheiraElgin === '133729'}
                   onChange={handleChange}
                 />
-                Sanduicheira Elgin (R$ 4,99)
+                Sanduicheira Elgin (R$ 9,99)
               </label>
               <label>
                 <input
                   type="checkbox"
                   name="sanduicheiraMystic"
-                  checked={!!form.sanduicheiraMystic}
+                  checked={form.sanduicheiraMystic === '133444'}
                   onChange={handleChange}
                 />
-                Sanduicheira Mystic (R$ 4,99)
+                Sanduicheira Mystic (R$ 9,99)
               </label>
             </div>
             
@@ -333,6 +398,9 @@ function FormularioPedido() {
             onClick={() => window.print()}
           >
             Imprimir QR Code
+          </button>
+          <button className="form-button" onClick={consultarVenda}>
+            Consultar Venda
           </button>
         </div>
       )}

@@ -1,11 +1,17 @@
-import DadosClientes from "./Inauguracao/DadosClientes"
-import Vendas from "../src/Venda/Venda"
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import FormularioPedido from "./Inauguracao/DadosClientes";
+import Lojas from "./consulta/Consulta";
 
 function App() {
   return (
-    <DadosClientes></DadosClientes>
-    // <Vendas></Vendas>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<FormularioPedido />} />
+        <Route path="/lojas" element={<Lojas />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
 export default App;
+
