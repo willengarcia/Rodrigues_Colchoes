@@ -7,7 +7,7 @@ import 'dotenv/config';
 const app = express()
 const porta = process.env.PORT || 4000
 const corsOptions = {
-    origin: ['https://node-y4wr.vercel.app', 'http://localhost:3000'], // Remova a barra final
+    origin: ['https://node-y4wr.vercel.app'], // Remova a barra final
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     credentials:true
 };
