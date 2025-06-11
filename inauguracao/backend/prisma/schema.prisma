@@ -17,14 +17,14 @@ model Venda {
   cep                 String
   endereco            String
   formaPagamento      FormaPagamento
-  cv                  String?  // Opcional, dependendo da forma de pagamento
-  auto                String?  // Opcional, dependendo da forma de pagamento
+  cv                  String?  
+  auto                String?  
   qtdTravesseiro      Int
   travesseiro         String
   sanduicheiraElgin   String
   sanduicheiraMystic  String
   subtotal            Float
-  status              StatusVenda @default(PENDING) // true, false ou pendente
+  status              StatusVenda @default(PENDING) 
   linkImage           String
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt

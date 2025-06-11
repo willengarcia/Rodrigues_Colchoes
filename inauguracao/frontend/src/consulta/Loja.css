@@ -6,10 +6,6 @@ body {
   padding: 0;
 }
 
-/* Container principal */
-div {
-  padding: 20px;
-}
 
 /* Título */
 h2 {
@@ -85,4 +81,14 @@ h2 {
 
 .card strong {
   color: #333;
+}
+
+@media (max-width: 600px) {
+  .card {
+    width: 100%;
+  }
+
+  .cards-container {
+    padding: 0 10px;
+  }
 }
