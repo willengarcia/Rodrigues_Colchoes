@@ -11,7 +11,7 @@ function Lojas() {
     async function buscarLojas() {
       try {
         const res = await axios.get(`${process.env.REACT_APP_API_URL}/lojas`);
-        setLojas(res.data); // Exemplo esperado: [{ id: 1, nome: "Loja A" }, ...]
+        setLojas(res.data); 
         console.log(res.data)
       } catch (error) {
         console.error("Erro ao buscar lojas:", error);
